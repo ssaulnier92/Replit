@@ -169,18 +169,61 @@ class SSHManager:
             logger.error(error_msg)
             return False, "", error_msg
     
-    def set_fan_speed(self, speed_value: str) -> Tuple[bool, str]:
+    def detect_qm2_card(self) -> Tuple[bool, str]:
         """
-        Set QNAP NAS fan speed
+        Detect QM2 card enc_sys_id automatically
+        
+        Returns:
+            Tuple of (success: bool, enc_sys_id or error_message: str)
+        """
+        if not self.is_connected():
+            return False, "Not connected to NAS"
+        
+        success, stdout, stderr = self.execute_command(QNAPCommands.get_enum_command())
+        if not success:
+            return False, f"Failed to enumerate devices: {stderr}"
+        
+        # Parse output to find QM2 card
+        lines = stdout.split('\n')
+        for line in lines:
+            if 'qm2' in line.lower() and 'QM2' in line:
+                # Extract enc_sys_id (typically the 3rd column)
+                parts = line.split()
+                if len(parts) >= 3:
+                    enc_sys_id = parts[2]  # qm2_1_11.32 format
+                    if self.connection_info is not None:
+                        self.connection_info.qm2_enc_sys_id = enc_sys_id
+                    return True, enc_sys_id
+        
+        return False, "No QM2 card found. Make sure you have a QM2 expansion card installed."
+    
+    def set_fan_speed(self, speed_value: str, enc_sys_id: str = None) -> Tuple[bool, str]:
+        """
+        Set QNAP QM2 fan speed using hal_app commands
         
         Args:
-            speed_value: Fan speed value (auto, low, medium, high, max)
+            speed_value: Fan speed value (auto, silent, low, medium, high, max)
+            enc_sys_id: QM2 card identifier (if None, will try to detect)
             
         Returns:
             Tuple of (success: bool, message: str)
         """
         if not self.is_connected():
             return False, "Not connected to NAS"
+        
+        # Auto-detect QM2 card if not provided
+        if not enc_sys_id:
+            if self.connection_info and self.connection_info.qm2_enc_sys_id:
+                enc_sys_id = self.connection_info.qm2_enc_sys_id
+            else:
+                success, detected_id = self.detect_qm2_card()
+                if not success:
+                    return False, detected_id
+                enc_sys_id = detected_id
+        
+        # Ensure enc_sys_id is not None at this point
+        if not enc_sys_id:
+            return False, "Could not determine QM2 card identifier"
         
         # Find the speed option
         speed_option = None
@@ -192,23 +235,33 @@ class SSHManager:
         if not speed_option:
             return False, f"Invalid fan speed value: {speed_value}"
         
-        # Try primary command first
-        success, stdout, stderr = self.execute_command(speed_option.command)
+        # Execute appropriate command
+        if speed_option.command == "restore_default":
+            # Restore default fan settings
+            command = QNAPCommands.restore_default_fan_command(enc_sys_id)
+        else:
+            # Set manual PWM mode first, then set PWM value
+            mode_command = QNAPCommands.set_fan_mode_command(enc_sys_id, 1)
+            success, stdout, stderr = self.execute_command(mode_command)
+            if not success:
+                return False, f"Failed to set fan mode: {stderr}"
+            
+            # Set PWM value
+            pwm_value = int(speed_option.command)
+            command = QNAPCommands.set_fan_pwm_command(enc_sys_id, pwm_value)
+        
+        success, stdout, stderr = self.execute_command(command)
         if success:
-            return True, f"Fan speed set to {speed_option.label}"
-        
-        # Try alternative commands if primary fails
-        if speed_value in QNAPCommands.ALTERNATIVE_COMMANDS:
-            for alt_command in QNAPCommands.ALTERNATIVE_COMMANDS[speed_value]:
-                success, stdout, stderr = self.execute_command(alt_command)
-                if success:
-                    return True, f"Fan speed set to {speed_option.label} (using alternative command)"
-        
-        return False, f"Failed to set fan speed: {stderr or 'Unknown error'}"
+            return True, f"Fan speed set to {speed_option.label} (QM2: {enc_sys_id or 'Unknown'})"
+        else:
+            return False, f"Failed to set fan speed: {stderr or 'Unknown error'}"
     
-    def get_fan_status(self) -> Tuple[bool, str]:
+    def get_fan_status(self, enc_sys_id: str = None) -> Tuple[bool, str]:
         """
-        Get current fan status from QNAP NAS
+        Get current fan status from QNAP QM2 card
+        
+        Args:
+            enc_sys_id: QM2 card identifier (if None, will try to detect)
         
         Returns:
             Tuple of (success: bool, status: str)
@@ -216,13 +269,39 @@ class SSHManager:
         if not self.is_connected():
             return False, "Not connected to NAS"
         
-        # Try different status commands
-        for command in QNAPCommands.get_status_commands():
-            success, stdout, stderr = self.execute_command(command)
-            if success and stdout:
-                return True, stdout
+        # Auto-detect QM2 card if not provided
+        if not enc_sys_id:
+            if self.connection_info and self.connection_info.qm2_enc_sys_id:
+                enc_sys_id = self.connection_info.qm2_enc_sys_id
+            else:
+                success, detected_id = self.detect_qm2_card()
+                if not success:
+                    return False, detected_id
+                enc_sys_id = detected_id
         
-        return False, "Could not retrieve fan status"
+        # Ensure enc_sys_id is not None at this point
+        if not enc_sys_id:
+            return False, "Could not determine QM2 card identifier"
+        
+        # Get fan status and PWM
+        status_info = []
+        
+        # Get general fan status
+        status_cmd = QNAPCommands.get_fan_status_command(enc_sys_id)
+        success, stdout, stderr = self.execute_command(status_cmd)
+        if success and stdout:
+            status_info.append(f"Fan Status: {stdout.strip()}")
+        
+        # Get PWM value
+        pwm_cmd = QNAPCommands.get_fan_pwm_command(enc_sys_id)
+        success, stdout, stderr = self.execute_command(pwm_cmd)
+        if success and stdout:
+            status_info.append(f"PWM: {stdout.strip()}")
+        
+        if status_info:
+            return True, " | ".join(status_info)
+        else:
+            return False, "Could not retrieve fan status"
     
     def get_connection_info(self) -> Optional[SSHConnection]:
         """Get current connection information"""

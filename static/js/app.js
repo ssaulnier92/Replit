@@ -90,6 +90,12 @@ class QNAPController {
                 this.showAlert(data.message, 'success');
                 this.updateConnectionStatus(true, data.connection_info);
                 this.enableFanControls();
+                
+                // Show QM2 detection message if available
+                if (data.qm2_detected) {
+                    this.showAlert(`QM2 Card detected: ${data.qm2_detected}`, 'info');
+                }
+                
                 this.getFanStatus();
                 this.refreshLogs();
                 
@@ -292,6 +298,16 @@ class QNAPController {
             
             if (connectionInfo) {
                 details.textContent = `${connectionInfo.username}@${connectionInfo.host}:${connectionInfo.port} (${connectionInfo.connected_at})`;
+                
+                // Show QM2 card info if available
+                const qm2Info = document.getElementById('qm2Info');
+                const qm2CardId = document.getElementById('qm2CardId');
+                if (connectionInfo.qm2_enc_sys_id) {
+                    qm2CardId.textContent = `QM2 Card: ${connectionInfo.qm2_enc_sys_id}`;
+                    qm2Info.style.display = 'block';
+                } else {
+                    qm2Info.style.display = 'none';
+                }
             }
             
             disconnectBtn.style.display = 'inline-block';
@@ -301,6 +317,10 @@ class QNAPController {
             status.className = 'fw-bold text-danger';
             details.textContent = '';
             disconnectBtn.style.display = 'none';
+            
+            // Hide QM2 info when disconnected
+            const qm2Info = document.getElementById('qm2Info');
+            qm2Info.style.display = 'none';
         }
     }
     

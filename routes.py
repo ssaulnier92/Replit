@@ -80,8 +80,14 @@ def connect():
                 'host': connection_info.host,
                 'username': connection_info.username,
                 'port': connection_info.port,
-                'connected_at': connection_info.connected_at.strftime('%Y-%m-%d %H:%M:%S')
+                'connected_at': connection_info.connected_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'qm2_enc_sys_id': connection_info.qm2_enc_sys_id
             }
+            
+            # Try to auto-detect QM2 card
+            success_detect, qm2_id = ssh_manager.detect_qm2_card()
+            if success_detect:
+                response_data['qm2_detected'] = qm2_id
         
         return jsonify(response_data)
         
@@ -243,7 +249,8 @@ def connection_status():
                 'host': connection_info.host,
                 'username': connection_info.username,
                 'port': connection_info.port,
-                'connected_at': connection_info.connected_at.strftime('%Y-%m-%d %H:%M:%S')
+                'connected_at': connection_info.connected_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'qm2_enc_sys_id': connection_info.qm2_enc_sys_id
             }
         
         return jsonify(response_data)
