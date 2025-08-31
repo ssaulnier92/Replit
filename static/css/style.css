@@ -1,0 +1,175 @@
+/* Custom styles for QNAP NAS Fan Controller */
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator i {
+    font-size: 0.8rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--bs-dark);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.log-entry {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-entry.success {
+    border-left: 3px solid var(--bs-success);
+}
+
+.log-entry.error {
+    border-left: 3px solid var(--bs-danger);
+}
+
+.log-timestamp {
+    color: var(--bs-info);
+    font-weight: 600;
+}
+
+.log-command {
+    color: var(--bs-warning);
+    font-weight: 500;
+}
+
+.log-response {
+    color: var(--bs-light);
+    margin-top: 0.25rem;
+}
+
+.log-error {
+    color: var(--bs-danger);
+    margin-top: 0.25rem;
+}
+
+.fan-speed-btn {
+    transition: all 0.2s ease;
+    min-height: 60px;
+}
+
+.fan-speed-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.fan-speed-btn.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--bs-border-color);
+}
+
+.card-header {
+    background-color: var(--bs-dark);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+/* Alert animations */
+.alert-enter {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Connection status specific styles */
+.text-success {
+    color: var(--bs-success) !important;
+}
+
+.text-danger {
+    color: var(--bs-danger) !important;
+}
+
+/* Loading spinner for buttons */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-left: 0.5rem;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .log-container {
+        max-height: 300px;
+    }
+    
+    .fan-speed-btn {
+        min-height: 50px;
+        font-size: 0.875rem;
+    }
+}
+
+/* Custom scrollbar for log container */
+.log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: var(--bs-dark);
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: var(--bs-secondary);
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-light);
+}
