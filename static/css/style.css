@@ -1,5 +1,64 @@
 /* Custom styles for QNAP NAS Fan Controller */
 
+/* Dark theme variables and base styles */
+:root {
+    --bs-body-bg: #212529;
+    --bs-body-color: #fff;
+    --bs-border-color: #495057;
+    --bs-dark: #343a40;
+    --bs-secondary: #6c757d;
+    --bs-light: #f8f9fa;
+    --bs-primary: #0d6efd;
+    --bs-success: #198754;
+    --bs-info: #0dcaf0;
+    --bs-warning: #ffc107;
+    --bs-danger: #dc3545;
+}
+
+body {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.card {
+    background-color: var(--bs-dark) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.form-control {
+    background-color: #495057 !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.form-control:focus {
+    background-color: #495057 !important;
+    border-color: var(--bs-primary) !important;
+    color: var(--bs-body-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.btn-outline-primary {
+    color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+}
+
+.btn-outline-secondary {
+    color: var(--bs-secondary) !important;
+    border-color: var(--bs-secondary) !important;
+}
+
+.btn-outline-info {
+    color: var(--bs-info) !important;
+    border-color: var(--bs-info) !important;
+}
+
 .status-indicator {
     display: flex;
     align-items: center;
